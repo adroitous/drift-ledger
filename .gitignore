@@ -1,0 +1,16 @@
+node_modules/
+coverage/
+artifacts/
+dist/
+release/
+*.crx
+*.pem
+*.zip
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+History
+history-imports/
+*history-import*.json
+.DS_Store
+Thumbs.db

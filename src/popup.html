@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Drift Ledger</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <h1>Drift Ledger</h1>
+        <p id="activityStatus">Loading</p>
+      </div>
+    </div>
+    <label class="switch" title="Toggle tracking">
+      <input id="trackingToggle" type="checkbox" aria-label="Tracking enabled">
+      <span></span>
+    </label>
+  </header>
+
+  <main>
+    <section class="block-section" aria-labelledby="blockHeading">
+      <div class="section-heading">
+        <h2 id="blockHeading">Current block</h2>
+        <span id="riskBadge" class="risk risk-low">Low</span>
+      </div>
+      <div class="block-metrics">
+        <div>
+          <strong id="blockDuration">0m</strong>
+          <span>active</span>
+        </div>
+        <div>
+          <strong id="navigationCount">0</strong>
+          <span>navigations</span>
+        </div>
+        <div>
+          <strong id="driftShare">0%</strong>
+          <span>drift mix</span>
+        </div>
+      </div>
+      <div id="blockDomains" class="domain-list"></div>
+      <p id="blockState" class="block-state" hidden></p>
+    </section>
+
+    <section class="today-section" aria-labelledby="todayHeading">
+      <div class="section-heading">
+        <h2 id="todayHeading">Today</h2>
+        <span id="todayTotal">0m</span>
+      </div>
+      <div id="categoryList" class="category-list"></div>
+    </section>
+
+    <section class="actions" aria-label="Current block actions">
+      <button id="continueButton" class="button button-primary" type="button">Continue</button>
+      <button id="snoozeButton" class="button" type="button">Remind in 15m</button>
+      <button id="intentionalButton" class="button" type="button">Mark intentional</button>
+    </section>
+  </main>
+
+  <footer>
+    <button id="optionsButton" class="text-button" type="button">Options</button>
+    <button id="clearButton" class="text-button danger" type="button">Clear data</button>
+  </footer>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

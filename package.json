@@ -1,0 +1,12 @@
+{
+  "name": "drift-ledger",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/background.js && node --check src/popup.js && node --check src/options.js && node --check tools/smoke-test-brave.mjs",
+    "smoke:brave": "node tools/smoke-test-brave.mjs",
+    "verify:brave": "npm test && npm run check && npm run smoke:brave"
+  }
+}

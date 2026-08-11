@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Drift Ledger Options</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <header class="page-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <h1>Drift Ledger</h1>
+          <p>Options</p>
+        </div>
+      </div>
+      <label class="tracking-control">
+        <input id="trackingEnabled" type="checkbox">
+        <span>Tracking enabled</span>
+      </label>
+    </div>
+  </header>
+
+  <main>
+    <form id="settingsForm">
+      <section aria-labelledby="thresholdsHeading">
+        <h2 id="thresholdsHeading">Drift thresholds</h2>
+        <div class="field-grid">
+          <label>
+            <span>Medium minutes</span>
+            <input id="mediumMinutes" type="number" min="5" max="240" step="5">
+          </label>
+          <label>
+            <span>High minutes</span>
+            <input id="highMinutes" type="number" min="10" max="480" step="5">
+          </label>
+          <label>
+            <span>Medium drift mix (%)</span>
+            <input id="mediumDriftShare" type="number" min="10" max="100" step="5">
+          </label>
+          <label>
+            <span>High drift mix (%)</span>
+            <input id="highDriftShare" type="number" min="10" max="100" step="5">
+          </label>
+          <label>
+            <span>Minimum navigations</span>
+            <input id="minimumNavigations" type="number" min="1" max="500" step="1">
+          </label>
+          <label>
+            <span>High navigations / hour</span>
+            <input id="highNavigationRate" type="number" min="1" max="500" step="1">
+          </label>
+        </div>
+      </section>
+
+      <section aria-labelledby="timingHeading">
+        <h2 id="timingHeading">Timing</h2>
+        <div class="field-grid">
+          <label>
+            <span>Idle after (seconds)</span>
+            <input id="idleDetectionSeconds" type="number" min="15" max="900" step="15">
+          </label>
+          <label>
+            <span>New block after (minutes)</span>
+            <input id="sessionGapMinutes" type="number" min="5" max="240" step="5">
+          </label>
+        </div>
+      </section>
+
+      <section aria-labelledby="overridesHeading">
+        <div class="section-title-row">
+          <h2 id="overridesHeading">Domain categories</h2>
+          <span id="overrideCount">0 overrides</span>
+        </div>
+        <div class="override-entry">
+          <label>
+            <span>Domain</span>
+            <input id="overrideDomain" type="text" inputmode="url" placeholder="example.com">
+          </label>
+          <label>
+            <span>Category</span>
+            <select id="overrideCategory"></select>
+          </label>
+          <button id="addOverride" class="button" type="button">Add</button>
+        </div>
+        <div id="overrideList" class="override-list"></div>
+      </section>
+
+      <div class="save-row">
+        <button class="button button-primary" type="submit">Save changes</button>
+        <span id="saveStatus" role="status"></span>
+      </div>
+    </form>
+
+    <section class="history-section" aria-labelledby="historyHeading">
+      <div class="section-title-row">
+        <h2 id="historyHeading">Brave history baseline</h2>
+        <span>Estimated</span>
+      </div>
+      <div id="historySummary" class="history-summary" hidden>
+        <dl class="history-metrics">
+          <div>
+            <dt>Coverage</dt>
+            <dd id="historyCoverage">-</dd>
+          </div>
+          <div>
+            <dt>Active time</dt>
+            <dd id="historyTime">-</dd>
+          </div>
+          <div>
+            <dt>Visits</dt>
+            <dd id="historyVisits">-</dd>
+          </div>
+          <div>
+            <dt>Drift blocks</dt>
+            <dd id="historyBlocks">-</dd>
+          </div>
+        </dl>
+        <div id="historySites" class="history-sites"></div>
+      </div>
+      <p id="historyEmpty" class="empty-state">No historical baseline imported</p>
+      <div class="history-actions">
+        <input id="historyFile" type="file" accept="application/json,.json">
+        <button id="importHistoryButton" class="button" type="button">Import Brave history</button>
+        <button id="removeHistoryButton" class="button button-danger" type="button" hidden>Remove baseline</button>
+      </div>
+      <span id="historyStatus" class="status-text" role="status"></span>
+    </section>
+
+    <section class="data-section" aria-labelledby="dataHeading">
+      <h2 id="dataHeading">Local data</h2>
+      <div class="data-actions">
+        <button id="exportButton" class="button" type="button">Export JSON</button>
+        <button id="clearButton" class="button button-danger" type="button">Clear all data</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

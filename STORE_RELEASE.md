@@ -49,7 +49,7 @@ All processing stays on the device. Drift Ledger does not collect page content, 
 
 **Limited use:** Certify that browsing data is used only for the disclosed user-facing functionality, is not sold or transferred, is not used for advertising or credit decisions, and is not read by the developer.
 
-**Privacy policy URL:** Use the public repository URL for `PRIVACY.md` after the GitHub repository is published.
+**Privacy policy URL:** https://github.com/adroitous/drift-ledger/blob/main/PRIVACY.md
 
 ## Permission Justifications
 

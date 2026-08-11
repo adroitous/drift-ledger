@@ -1,4 +1,4 @@
-import { sendRuntimeMessage } from "./chromeCompat.js";
+import { callExtensionApi, sendRuntimeMessage } from "./chromeCompat.js";
 
 const elements = {
   activityStatus: document.querySelector("#activityStatus"),
@@ -11,12 +11,22 @@ const elements = {
   blockState: document.querySelector("#blockState"),
   todayTotal: document.querySelector("#todayTotal"),
   categoryList: document.querySelector("#categoryList"),
+  driftBudget: document.querySelector("#driftBudget"),
+  focusInactive: document.querySelector("#focusInactive"),
+  focusActive: document.querySelector("#focusActive"),
+  focusLabel: document.querySelector("#focusLabel"),
+  focusRemaining: document.querySelector("#focusRemaining"),
+  startFocusButton: document.querySelector("#startFocusButton"),
+  stopFocusButton: document.querySelector("#stopFocusButton"),
   continueButton: document.querySelector("#continueButton"),
   snoozeButton: document.querySelector("#snoozeButton"),
   intentionalButton: document.querySelector("#intentionalButton"),
   optionsButton: document.querySelector("#optionsButton"),
+  dashboardButton: document.querySelector("#dashboardButton"),
   clearButton: document.querySelector("#clearButton")
 };
+
+let latestSnapshot = null;
 
 function duration(seconds) {
   const rounded = Math.max(0, Math.round(Number(seconds || 0)));
@@ -26,6 +36,11 @@ function duration(seconds) {
   const hours = Math.floor(rounded / 3600);
   const minutes = Math.floor((rounded % 3600) / 60);
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+}
+
+function countdown(seconds) {
+  const value = Math.max(0, Math.ceil(Number(seconds || 0)));
+  return `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
 }
 
 function pausedLabel(reason) {
@@ -110,6 +125,7 @@ function renderCategories(snapshot) {
 }
 
 function render(snapshot) {
+  latestSnapshot = snapshot;
   const block = snapshot.currentBlock;
   elements.trackingToggle.checked = snapshot.trackingEnabled;
   elements.activityStatus.textContent = snapshot.activity?.counting
@@ -124,7 +140,17 @@ function render(snapshot) {
   elements.driftShare.textContent = `${Math.round((block?.driftShare || 0) * 100)}%`;
   renderDomains(block?.topDomains || []);
   elements.todayTotal.textContent = duration(snapshot.today.totalActiveSeconds);
+  elements.driftBudget.textContent = `${duration(snapshot.today.driftSeconds)} / ${duration(snapshot.today.driftBudgetSeconds)}`;
   renderCategories(snapshot);
+
+  const focus = snapshot.focus;
+  elements.focusInactive.hidden = Boolean(focus);
+  elements.focusActive.hidden = !focus;
+  elements.focusRemaining.hidden = !focus;
+  if (focus) {
+    elements.focusLabel.textContent = focus.label;
+    elements.focusRemaining.textContent = countdown(focus.remainingSeconds);
+  }
 
   const snoozed = Number(block?.snoozeUntil || 0) > snapshot.now;
   elements.blockState.hidden = !block?.intentional && !snoozed;
@@ -166,6 +192,21 @@ elements.intentionalButton.addEventListener("click", async () => {
 });
 
 elements.optionsButton.addEventListener("click", () => chrome.runtime.openOptionsPage());
+elements.dashboardButton.addEventListener("click", () => callExtensionApi(chrome.tabs, "create", {
+  url: chrome.runtime.getURL("src/dashboard.html")
+}));
+elements.startFocusButton.addEventListener("click", async () => {
+  const response = await request({
+    type: "START_FOCUS",
+    minutes: latestSnapshot?.settings.focusDefaultMinutes,
+    label: "Focus session"
+  });
+  render(response.snapshot);
+});
+elements.stopFocusButton.addEventListener("click", async () => {
+  const response = await request({ type: "STOP_FOCUS" });
+  render(response.snapshot);
+});
 
 elements.clearButton.addEventListener("click", async () => {
   if (!window.confirm("Clear all locally stored attention data?")) {
@@ -176,4 +217,9 @@ elements.clearButton.addEventListener("click", async () => {
 });
 
 refresh();
+setInterval(() => {
+  if (!latestSnapshot?.focus) return;
+  latestSnapshot.focus.remainingSeconds = Math.max(0, latestSnapshot.focus.remainingSeconds - 1);
+  elements.focusRemaining.textContent = countdown(latestSnapshot.focus.remainingSeconds);
+}, 1000);
 setInterval(refresh, 15000);

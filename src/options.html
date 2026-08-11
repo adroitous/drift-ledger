@@ -16,10 +16,13 @@
           <p>Options</p>
         </div>
       </div>
-      <label class="tracking-control">
-        <input id="trackingEnabled" type="checkbox">
-        <span>Tracking enabled</span>
-      </label>
+      <div class="header-actions">
+        <button id="dashboardButton" class="header-button" type="button">Dashboard</button>
+        <label class="tracking-control">
+          <input id="trackingEnabled" type="checkbox">
+          <span>Tracking enabled</span>
+        </label>
+      </div>
     </div>
   </header>
 
@@ -65,6 +68,28 @@
           <label>
             <span>New block after (minutes)</span>
             <input id="sessionGapMinutes" type="number" min="5" max="240" step="5">
+          </label>
+          <label>
+            <span>Keep measured data (days)</span>
+            <input id="retentionDays" type="number" min="7" max="365" step="1">
+          </label>
+        </div>
+      </section>
+
+      <section aria-labelledby="awarenessHeading">
+        <h2 id="awarenessHeading">Awareness and focus</h2>
+        <div class="field-grid">
+          <label>
+            <span>Daily drift budget (minutes)</span>
+            <input id="dailyDriftBudgetMinutes" type="number" min="5" max="720" step="5">
+          </label>
+          <label>
+            <span>Default focus session (minutes)</span>
+            <input id="focusDefaultMinutes" type="number" min="5" max="180" step="5">
+          </label>
+          <label class="checkbox-setting">
+            <input id="notificationsEnabled" type="checkbox">
+            <span>Local reminders and focus notifications</span>
           </label>
         </div>
       </section>

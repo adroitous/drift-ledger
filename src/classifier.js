@@ -1,11 +1,17 @@
 export const CATEGORY_DEFINITIONS = {
-  social: { label: "Social / feed", color: "#e25f4b" },
-  video: { label: "Video / streaming", color: "#247f83" },
-  sports: { label: "Sports", color: "#d99a28" },
-  game_stats: { label: "Game stats / esports", color: "#5576a8" },
-  coding: { label: "Coding / practice", color: "#4e8b57" },
-  search: { label: "Search / navigation", color: "#8a6f9f" },
-  other: { label: "Other", color: "#7b828a" }
+  social: { label: "Social / feed", color: "#e25f4b", role: "drift" },
+  video: { label: "Video / streaming", color: "#247f83", role: "drift" },
+  sports: { label: "Sports", color: "#d99a28", role: "drift" },
+  game_stats: { label: "Game stats / esports", color: "#5576a8", role: "drift" },
+  news: { label: "News", color: "#a6653f", role: "drift" },
+  shopping: { label: "Shopping", color: "#b05c82", role: "drift" },
+  communication: { label: "Communication", color: "#3f7c9b", role: "neutral" },
+  learning: { label: "Learning", color: "#4e8b57", role: "supportive" },
+  coding: { label: "Coding / practice", color: "#32705d", role: "supportive" },
+  work: { label: "Work / admin", color: "#626f84", role: "supportive" },
+  finance: { label: "Finance", color: "#997b28", role: "neutral" },
+  search: { label: "Search / navigation", color: "#8a6f9f", role: "neutral" },
+  other: { label: "Other", color: "#7b828a", role: "neutral" }
 };
 
 export const DEFAULT_DOMAIN_RULES = {
@@ -36,10 +42,50 @@ export const DEFAULT_DOMAIN_RULES = {
     "vlr.gg",
     "chess.com"
   ],
+  news: [
+    "bbc.com",
+    "cnn.com",
+    "reuters.com",
+    "nytimes.com",
+    "washingtonpost.com",
+    "theguardian.com"
+  ],
+  shopping: [
+    "amazon.com",
+    "ebay.com",
+    "etsy.com",
+    "walmart.com"
+  ],
+  communication: [
+    "discord.com",
+    "gmail.com",
+    "outlook.com",
+    "slack.com",
+    "zoom.us"
+  ],
+  learning: [
+    "coursera.org",
+    "edx.org",
+    "khanacademy.org",
+    "wikipedia.org"
+  ],
   coding: [
     "neetcode.io",
     "leetcode.com",
     "github.com"
+  ],
+  work: [
+    "asana.com",
+    "atlassian.net",
+    "linear.app",
+    "notion.so",
+    "office.com"
+  ],
+  finance: [
+    "fidelity.com",
+    "paypal.com",
+    "schwab.com",
+    "stripe.com"
   ],
   search: [
     "google.com",

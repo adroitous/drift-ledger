@@ -1,4 +1,10 @@
-export const DRIFT_CATEGORIES = new Set(["social", "video", "sports", "game_stats"]);
+import { CATEGORY_DEFINITIONS } from "./classifier.js";
+
+export const DRIFT_CATEGORIES = new Set(
+  Object.entries(CATEGORY_DEFINITIONS)
+    .filter(([, definition]) => definition.role === "drift")
+    .map(([category]) => category)
+);
 
 function sumValues(record = {}) {
   return Object.values(record).reduce((sum, value) => sum + Number(value || 0), 0);

@@ -6,7 +6,7 @@ Drift Ledger processes browsing activity locally to show active time, session su
 
 ## Data Processed
 
-Drift Ledger stores domain names, active-time totals, navigation counts, session summaries, category assignments, notification state, and user-configured settings. An optional historical import may add estimated domain-level aggregates from a Brave History database.
+Drift Ledger stores domain names, active-time totals, navigation counts, session summaries, hourly aggregates, category assignments, notification state, optional focus-session labels and durations, and user-configured settings. An optional historical import may add estimated domain-level aggregates from a Brave History database.
 
 ## Data Not Collected
 

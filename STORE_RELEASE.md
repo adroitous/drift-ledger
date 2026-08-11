@@ -27,7 +27,7 @@ The generated ZIP contains only `manifest.json`, `src/`, and `icons/`, with the 
 
 **Name:** Drift Ledger
 
-**Summary:** A private, local ledger for active browsing time and attention drift in Brave Desktop.
+**Summary:** Local Brave time analytics, attention-drift patterns, site averages, and focus sessions.
 
 **Category:** Productivity
 
@@ -35,7 +35,7 @@ The generated ZIP contains only `manifest.json`, `src/`, and `icons/`, with the 
 
 Drift Ledger measures active foreground browsing time by domain in Brave Desktop. It groups activity into browsing blocks and uses visible, configurable thresholds to flag long feed, video, sports, and game-stat loops.
 
-The popup shows the current block, top domains, navigation count, drift mix, and today's category totals. You can pause tracking, snooze a reminder, or mark a block as intentional. The options page supports local domain-category overrides, local JSON export, complete data clearing, and an optional estimated baseline generated from a saved Brave History database.
+The popup shows the current block, top domains, navigation count, drift mix, focus timer, and today's category totals. The dashboard adds daily and hourly charts, site and session averages, period comparisons, browsing-block review, deterministic pattern notes, CSV and JSON export, and a separately labeled historical estimate. You can pause tracking, snooze a reminder, mark a block as intentional, configure local categories and budgets, or start a local focus session.
 
 All processing stays on the device. Drift Ledger does not collect page content, full URLs, search terms, form input, cookies, or incognito activity. It has no account, analytics, advertising, cloud sync, or remote API calls.
 

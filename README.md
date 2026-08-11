@@ -1,12 +1,27 @@
 # Drift Ledger
 
-Drift Ledger is a local-only Manifest V3 extension for Brave Desktop on Windows. It measures active foreground time by domain, groups activity into browsing blocks, and uses transparent thresholds to flag long feed, video, sports, and game-stat loops.
+Drift Ledger is a local-only Manifest V3 extension for Brave Desktop on Windows. It measures active foreground time by domain, groups activity into browsing blocks, calculates site and session averages, reveals daily and hourly patterns, and uses transparent thresholds to flag long feed, video, sports, news, shopping, and game-stat loops.
 
 It does not collect page content, raw URLs, search terms, form inputs, or incognito activity. Data stays in `chrome.storage.local` and is retained for 30 days by default.
 
 The extension requests access to tabs, navigation events, idle state, local storage, alarms, and notifications. It does not request permission to read or change page content.
 
 The compatibility floor is a Brave build based on Chromium 92 or newer. Extension API calls use the legacy callback contract as well as current Promise behavior so the idle, tab, storage, badge, and notification paths work across that range.
+
+## Dashboard
+
+The full dashboard provides:
+
+- Seven, 30, and 90-day measured reports.
+- Daily and hourly activity distributions.
+- Site totals, visits, sessions, average visit time, average session time, and longest session.
+- Category allocation, drift share, daily-budget consistency, period comparisons, and deterministic pattern notes.
+- Browsing-block review with risk, navigations, duration, and top domains.
+- Local focus sessions with toolbar countdowns and completion notifications.
+- CSV site reports and privacy-safe JSON backup exports.
+- A separately labeled historical Brave estimate that is never mixed into measured totals.
+
+Classification generalizes through explicit category roles: drift, neutral, and supportive. Built-in rules cover common domains, while local domain overrides let the user correct classifications without an AI service or remote data transfer.
 
 ## Historical Continuity
 
@@ -35,6 +50,7 @@ python .\tools\build_brave_history_import.py `
 3. Choose **Load unpacked**.
 4. Select the `drift-ledger` source folder.
 5. Pin **Drift Ledger** from the extensions menu.
+6. Open **Dashboard** from the popup for the complete application.
 
 No build step is required. After source changes, use **Reload** on `brave://extensions`.
 
@@ -44,7 +60,8 @@ No build step is required. After source changes, use **Reload** on `brave://exte
 - A browsing block ends after 30 minutes without counted activity.
 - Medium risk defaults to 45 active minutes, at least 60% drift-category time, and at least 30 navigations.
 - High risk defaults to 90 active minutes, at least 75% drift-category time, and either 40 navigations per hour or a recurring top-domain loop.
-- Coding sites are not treated as drift by default.
+- Coding, learning, and work sites are not treated as drift by default.
+- The daily drift budget, retention period, default focus duration, and local notifications are configurable.
 
 All thresholds and domain overrides are available from the extension options page.
 

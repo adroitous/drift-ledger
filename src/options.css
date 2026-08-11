@@ -81,6 +81,21 @@ h1 {
   accent-color: #54c4bd;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.header-button {
+  border: 0;
+  border-bottom: 2px solid #54c4bd;
+  padding: 8px 2px;
+  color: #ffffff;
+  background: transparent;
+  cursor: pointer;
+}
+
 main {
   width: min(880px, calc(100% - 32px));
   margin: 0 auto;
@@ -121,6 +136,24 @@ select {
   border-radius: 5px;
   color: #17212b;
   background: #ffffff;
+}
+
+.checkbox-setting {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-top: 19px;
+}
+
+.checkbox-setting input {
+  width: 18px;
+  height: 18px;
+  accent-color: #247f83;
+}
+
+.checkbox-setting span {
+  margin: 0;
 }
 
 input:focus,
@@ -320,6 +353,10 @@ button:focus-visible {
 
   .tracking-control span {
     max-width: 70px;
+  }
+
+  .header-actions {
+    gap: 10px;
   }
 
   .field-grid {

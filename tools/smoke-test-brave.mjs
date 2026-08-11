@@ -267,6 +267,60 @@ async function main() {
     assert.equal(exportedText.includes("private-path"), false);
     assert.equal(exportedText.includes("smoke-secret"), false);
 
+    const dashboardPage = await context.newPage();
+    await dashboardPage.goto(`chrome-extension://${extensionId}/src/dashboard.html`);
+    await dashboardPage.locator("#totalActive").waitFor({ state: "visible" });
+    assert.equal(await dashboardPage.locator("h1").innerText(), "Drift Ledger");
+    response = await runtimeMessage(dashboardPage, { type: "GET_DASHBOARD", days: 7 });
+    assert.equal(response.ok, true);
+    assert.equal(response.report.range.days, 7);
+    assert.equal(response.report.history.totals.estimatedActiveSeconds, 120);
+    assert.ok(Array.isArray(response.report.sites));
+
+    response = await runtimeMessage(dashboardPage, {
+      type: "START_FOCUS",
+      minutes: 5,
+      label: "Smoke test focus"
+    });
+    assert.equal(response.snapshot.focus.label, "Smoke test focus");
+    await dashboardPage.reload();
+    await dashboardPage.locator("#focusActive").waitFor({ state: "visible" });
+    assert.equal(await dashboardPage.locator("#focusActiveLabel").innerText(), "Smoke test focus");
+
+    await dashboardPage.setViewportSize({ width: 1280, height: 800 });
+    const desktopOverflow = await dashboardPage.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth
+    }));
+    assert.ok(
+      desktopOverflow.scrollWidth <= desktopOverflow.clientWidth,
+      `Desktop dashboard overflow: ${JSON.stringify(desktopOverflow)}`
+    );
+    await dashboardPage.screenshot({ path: join(artifactRoot, "dashboard-1280x800.png") });
+    await dashboardPage.setViewportSize({ width: 390, height: 844 });
+    const dashboardOverflow = await dashboardPage.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      offenders: [...document.querySelectorAll("body *")]
+        .map((element) => {
+          const rect = element.getBoundingClientRect();
+          return { tag: element.tagName, className: element.className, id: element.id, left: rect.left, right: rect.right };
+        })
+        .filter((entry) => entry.left < -1 || entry.right > document.documentElement.clientWidth + 1)
+        .slice(0, 10)
+    }));
+    await dashboardPage.screenshot({ path: join(artifactRoot, "dashboard-390x844.png") });
+    assert.ok(
+      dashboardOverflow.scrollWidth <= dashboardOverflow.clientWidth,
+      `Dashboard overflow: ${JSON.stringify(dashboardOverflow)}`
+    );
+    response = await runtimeMessage(dashboardPage, { type: "STOP_FOCUS" });
+    assert.equal(response.ok, true);
+    assert.equal(response.snapshot.focus, null);
+    await dashboardPage.reload();
+    await dashboardPage.locator("#focusSetup").waitFor({ state: "visible" });
+    await dashboardPage.locator("#focusActive").waitFor({ state: "hidden" });
+
     const popupPage = await context.newPage();
     await popupPage.setViewportSize({ width: 390, height: 700 });
     await popupPage.goto(`chrome-extension://${extensionId}/src/popup.html`);
@@ -280,6 +334,7 @@ async function main() {
     await popupPage.screenshot({ path: join(artifactRoot, "popup-390x700.png") });
 
     await browsingPage.close();
+    await dashboardPage.close();
     await popupPage.close();
     await optionsPage.close();
 
@@ -287,7 +342,7 @@ async function main() {
     const manifest = JSON.parse(readFileSync(join(projectRoot, "manifest.json"), "utf8"));
     console.log(`PASS Drift Ledger ${manifest.version} on ${basename(bravePath)}`);
     console.log(`PASS extension service worker ${extensionId}`);
-    console.log("PASS settings, legacy import, Brave-only rejection, export privacy, and popup layout");
+    console.log("PASS settings, legacy import, Brave-only rejection, export privacy, dashboard, focus, and responsive layout");
     console.log(environmentalPause
       ? `INFO active-time credit skipped because Brave reported ${activeContext.snapshot.pausedReason}`
       : "PASS active domain timing on an isolated localhost page");

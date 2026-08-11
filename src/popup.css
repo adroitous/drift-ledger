@@ -10,6 +10,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   width: 380px;
   min-height: 500px;
@@ -142,6 +146,43 @@ h2 {
   color: #56616a;
   font-size: 12px;
   font-weight: 650;
+}
+
+.focus-section {
+  background: #eef3f3;
+}
+
+.focus-row {
+  min-height: 35px;
+  margin-top: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #56616a;
+  font-size: 12px;
+}
+
+.focus-row strong {
+  overflow: hidden;
+  color: #17212b;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.budget-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 13px;
+  padding-top: 10px;
+  border-top: 1px solid #dfe3e2;
+  color: #68737b;
+  font-size: 11px;
+}
+
+.budget-row strong {
+  color: #26323a;
 }
 
 .risk {
@@ -325,7 +366,8 @@ h2 {
 
 footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 18px;
   padding: 11px 16px;
 }
 
@@ -345,4 +387,5 @@ footer {
 
 .text-button.danger {
   color: #9b3f36;
+  margin-left: auto;
 }

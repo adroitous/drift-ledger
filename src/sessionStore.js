@@ -19,6 +19,9 @@ export const DEFAULT_SETTINGS = {
   idleDetectionSeconds: 60,
   sessionGapMinutes: 30,
   retentionDays: 30,
+  dailyDriftBudgetMinutes: 90,
+  focusDefaultMinutes: 25,
+  notificationsEnabled: true,
   domainOverrides: {}
 };
 
@@ -40,6 +43,9 @@ export function sanitizeSettings(raw = {}) {
     idleDetectionSeconds: Math.round(finiteNumber(merged.idleDetectionSeconds, 60, 15, 900)),
     sessionGapMinutes: finiteNumber(merged.sessionGapMinutes, 30, 5, 240),
     retentionDays: Math.round(finiteNumber(merged.retentionDays, 30, 7, 365)),
+    dailyDriftBudgetMinutes: Math.round(finiteNumber(merged.dailyDriftBudgetMinutes, 90, 5, 720)),
+    focusDefaultMinutes: Math.round(finiteNumber(merged.focusDefaultMinutes, 25, 5, 180)),
+    notificationsEnabled: Boolean(merged.notificationsEnabled),
     domainOverrides: typeof merged.domainOverrides === "object" && merged.domainOverrides
       ? merged.domainOverrides
       : {}
@@ -72,6 +78,8 @@ export function createEmptyState(now = Date.now()) {
     historyBaseline: null,
     currentBlock: null,
     archivedBlocks: [],
+    focusSession: null,
+    focusHistory: [],
     activity: emptyActivity(now),
     pausedReason: "starting",
     lastSavedAt: now
@@ -88,7 +96,9 @@ export function hydrateState(raw, now = Date.now()) {
     ...raw,
     daily: raw.daily || {},
     historyBaseline: raw.historyBaseline || null,
-    archivedBlocks: Array.isArray(raw.archivedBlocks) ? raw.archivedBlocks : []
+    archivedBlocks: Array.isArray(raw.archivedBlocks) ? raw.archivedBlocks : [],
+    focusSession: raw.focusSession || null,
+    focusHistory: Array.isArray(raw.focusHistory) ? raw.focusHistory : []
   };
   const activity = { ...emptyActivity(now), ...(raw.activity || {}) };
   if (now - Number(activity.lastTickAt || 0) > 5 * 60 * 1000) {
@@ -135,8 +145,18 @@ export function ensureBlock(state, now, settings) {
 function ensureDaily(state, now) {
   const key = localDateKey(now);
   if (!state.daily[key]) {
-    state.daily[key] = { totalActiveSeconds: 0, domains: {}, categories: {} };
+    state.daily[key] = {
+      totalActiveSeconds: 0,
+      domains: {},
+      categories: {},
+      hours: {},
+      focusSeconds: 0,
+      focusSessions: 0
+    };
   }
+  state.daily[key].hours ||= {};
+  state.daily[key].focusSeconds ||= 0;
+  state.daily[key].focusSessions ||= 0;
   return state.daily[key];
 }
 
@@ -171,6 +191,8 @@ export function creditActivity(state, activity, seconds, now, settings) {
   const domain = ensureDailyDomain(day, activity.domain);
   day.totalActiveSeconds += seconds;
   day.categories[activity.category] = (day.categories[activity.category] || 0) + seconds;
+  const hour = String(new Date(now).getHours()).padStart(2, "0");
+  day.hours[hour] = (day.hours[hour] || 0) + seconds;
   domain.activeSeconds += seconds;
   domain.maxSessionSeconds = Math.max(domain.maxSessionSeconds, block.domainSeconds[activity.domain]);
   if (firstDomainCreditInBlock) {
@@ -212,5 +234,66 @@ export function pruneState(state, settings, now = Date.now()) {
 }
 
 export function todaySummary(state, now = Date.now()) {
-  return state.daily[localDateKey(now)] || { totalActiveSeconds: 0, domains: {}, categories: {} };
+  return state.daily[localDateKey(now)] || {
+    totalActiveSeconds: 0,
+    domains: {},
+    categories: {},
+    hours: {},
+    focusSeconds: 0,
+    focusSessions: 0
+  };
+}
+
+function sanitizeFocusLabel(value) {
+  return String(value || "Focus session").trim().slice(0, 80) || "Focus session";
+}
+
+export function startFocusSession(state, durationMinutes, label, now = Date.now()) {
+  const minutes = Math.round(finiteNumber(durationMinutes, 25, 5, 180));
+  state.focusSession = {
+    id: `${now}-${Math.random().toString(36).slice(2, 8)}`,
+    label: sanitizeFocusLabel(label),
+    start: now,
+    endsAt: now + minutes * 60 * 1000
+  };
+  return state.focusSession;
+}
+
+function creditFocusTime(state, start, end) {
+  let cursor = start;
+  while (cursor < end) {
+    const boundary = new Date(cursor);
+    boundary.setHours(24, 0, 0, 0);
+    const sliceEnd = Math.min(end, boundary.getTime());
+    const day = ensureDaily(state, cursor);
+    day.focusSeconds += Math.max(0, (sliceEnd - cursor) / 1000);
+    cursor = sliceEnd;
+  }
+}
+
+export function stopFocusSession(state, now = Date.now(), completed = false) {
+  const focus = state.focusSession;
+  if (!focus) {
+    return null;
+  }
+  const end = Math.max(focus.start, Math.min(now, focus.endsAt));
+  const session = {
+    ...focus,
+    end,
+    durationSeconds: Math.max(0, (end - focus.start) / 1000),
+    completed: Boolean(completed || now >= focus.endsAt)
+  };
+  creditFocusTime(state, focus.start, end);
+  ensureDaily(state, focus.start).focusSessions += 1;
+  state.focusHistory.unshift(session);
+  state.focusHistory = state.focusHistory.slice(0, 200);
+  state.focusSession = null;
+  return session;
+}
+
+export function completeExpiredFocus(state, now = Date.now()) {
+  if (!state.focusSession || now < Number(state.focusSession.endsAt || 0)) {
+    return null;
+  }
+  return stopFocusSession(state, now, true);
 }

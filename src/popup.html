@@ -22,6 +22,21 @@
   </header>
 
   <main>
+    <section class="focus-section" aria-labelledby="focusHeading">
+      <div class="section-heading">
+        <h2 id="focusHeading">Focus</h2>
+        <span id="focusRemaining" hidden>25:00</span>
+      </div>
+      <div id="focusInactive" class="focus-row">
+        <span>Start an intentional session</span>
+        <button id="startFocusButton" class="button" type="button">Start</button>
+      </div>
+      <div id="focusActive" class="focus-row" hidden>
+        <strong id="focusLabel">Focus session</strong>
+        <button id="stopFocusButton" class="button" type="button">Stop</button>
+      </div>
+    </section>
+
     <section class="block-section" aria-labelledby="blockHeading">
       <div class="section-heading">
         <h2 id="blockHeading">Current block</h2>
@@ -51,6 +66,10 @@
         <span id="todayTotal">0m</span>
       </div>
       <div id="categoryList" class="category-list"></div>
+      <div class="budget-row">
+        <span>Daily drift budget</span>
+        <strong id="driftBudget">0m / 90m</strong>
+      </div>
     </section>
 
     <section class="actions" aria-label="Current block actions">
@@ -61,6 +80,7 @@
   </main>
 
   <footer>
+    <button id="dashboardButton" class="text-button" type="button">Dashboard</button>
     <button id="optionsButton" class="text-button" type="button">Options</button>
     <button id="clearButton" class="text-button danger" type="button">Clear data</button>
   </footer>

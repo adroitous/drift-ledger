@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Drift Ledger Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <h1>Drift Ledger</h1>
+          <p id="liveStatus">Loading current activity</p>
+        </div>
+      </div>
+      <nav aria-label="Application">
+        <span class="nav-current">Dashboard</span>
+        <button id="settingsButton" type="button">Settings</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="focus-band" aria-labelledby="focusHeading">
+      <div>
+        <p class="eyebrow">Intentional time</p>
+        <h2 id="focusHeading">Focus session</h2>
+        <p id="focusDescription">Start a local timer while Drift Ledger continues measuring normally.</p>
+      </div>
+      <div id="focusSetup" class="focus-controls">
+        <label>
+          <span>Session label</span>
+          <input id="focusLabel" type="text" maxlength="80" placeholder="What are you working on?">
+        </label>
+        <div class="duration-control" aria-label="Focus duration">
+          <button class="duration-button is-selected" type="button" data-minutes="25">25m</button>
+          <button class="duration-button" type="button" data-minutes="50">50m</button>
+          <button class="duration-button" type="button" data-minutes="90">90m</button>
+        </div>
+        <button id="startFocusButton" class="button button-primary" type="button">Start focus</button>
+      </div>
+      <div id="focusActive" class="focus-active" hidden>
+        <div>
+          <strong id="focusActiveLabel">Focus session</strong>
+          <span id="focusRemaining">25:00</span>
+        </div>
+        <button id="stopFocusButton" class="button" type="button">Stop</button>
+      </div>
+    </section>
+
+    <div class="report-toolbar">
+      <div>
+        <p class="eyebrow">Measured activity</p>
+        <h2>Time portfolio</h2>
+      </div>
+      <div class="range-control" aria-label="Report range">
+        <button class="range-button is-selected" type="button" data-days="7">7 days</button>
+        <button class="range-button" type="button" data-days="30">30 days</button>
+        <button class="range-button" type="button" data-days="90">90 days</button>
+      </div>
+      <div class="export-actions">
+        <button id="exportCsvButton" class="button" type="button">Export CSV</button>
+        <button id="exportJsonButton" class="button" type="button">Export JSON</button>
+      </div>
+    </div>
+
+    <section class="summary-strip" aria-label="Period summary">
+      <div><span>Total active</span><strong id="totalActive">0m</strong></div>
+      <div><span>Daily average</span><strong id="dailyAverage">0m</strong></div>
+      <div><span>Drift mix</span><strong id="driftMix">0%</strong></div>
+      <div><span>Visits</span><strong id="totalVisits">0</strong></div>
+      <div><span>Longest block</span><strong id="longestBlock">0m</strong></div>
+      <div><span>Focus time</span><strong id="focusTime">0m</strong></div>
+    </section>
+
+    <section class="report-grid report-section" aria-labelledby="dailyHeading">
+      <div>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Consistency</p>
+            <h2 id="dailyHeading">Daily activity</h2>
+          </div>
+          <span id="rangeLabel" class="quiet-label"></span>
+        </div>
+        <div class="chart-legend" aria-label="Chart legend">
+          <span><i class="legend-active"></i>Active</span>
+          <span><i class="legend-drift"></i>Drift category</span>
+        </div>
+        <div id="dailyChart" class="daily-chart" aria-label="Daily active-time chart"></div>
+      </div>
+      <aside class="insight-panel" aria-labelledby="insightsHeading">
+        <p class="eyebrow">Observed patterns</p>
+        <h2 id="insightsHeading">Period notes</h2>
+        <ul id="insightList"></ul>
+        <dl class="pattern-metrics">
+          <div><dt>Active days</dt><dd id="activeDays">0</dd></div>
+          <div><dt>Over drift budget</dt><dd id="daysOverBudget">0 days</dd></div>
+          <div><dt>Period change</dt><dd id="periodChange">No comparison</dd></div>
+        </dl>
+      </aside>
+    </section>
+
+    <section class="report-grid report-section" aria-labelledby="categoriesHeading">
+      <div>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Allocation</p>
+            <h2 id="categoriesHeading">Categories</h2>
+          </div>
+        </div>
+        <div id="categoryBreakdown" class="category-breakdown"></div>
+      </div>
+      <div>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Time of day</p>
+            <h2>Hourly distribution</h2>
+          </div>
+        </div>
+        <div id="hourlyChart" class="hourly-chart" aria-label="Hourly browsing distribution"></div>
+      </div>
+    </section>
+
+    <section class="report-section" aria-labelledby="sitesHeading">
+      <div class="section-heading table-heading">
+        <div>
+          <p class="eyebrow">Domain aggregates</p>
+          <h2 id="sitesHeading">Sites</h2>
+        </div>
+        <label class="search-field">
+          <span class="sr-only">Search sites</span>
+          <input id="siteSearch" type="search" placeholder="Search domains">
+        </label>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Domain</th>
+              <th>Category</th>
+              <th><button type="button" data-sort="seconds">Active time</button></th>
+              <th><button type="button" data-sort="visits">Visits</button></th>
+              <th><button type="button" data-sort="averageSecondsPerVisit">Average / visit</button></th>
+              <th><button type="button" data-sort="averageSecondsPerSession">Average / session</button></th>
+              <th><button type="button" data-sort="maxSessionSeconds">Longest session</button></th>
+            </tr>
+          </thead>
+          <tbody id="siteRows"></tbody>
+        </table>
+      </div>
+      <p id="siteEmpty" class="empty-state" hidden>No measured sites in this range.</p>
+    </section>
+
+    <section class="report-section" aria-labelledby="blocksHeading">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Session review</p>
+          <h2 id="blocksHeading">Browsing blocks</h2>
+        </div>
+        <span id="blockCount" class="quiet-label">0 blocks</span>
+      </div>
+      <div id="blockRows" class="block-rows"></div>
+    </section>
+
+    <section id="historySection" class="report-section history-section" aria-labelledby="historyHeading" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Imported estimate</p>
+          <h2 id="historyHeading">Brave history baseline</h2>
+        </div>
+        <span id="historyCoverage" class="quiet-label"></span>
+      </div>
+      <p class="history-note">Historical estimates remain separate from the measured report above.</p>
+      <div class="history-summary">
+        <div><span>Estimated active</span><strong id="historyActive">0m</strong></div>
+        <div><span>Visits</span><strong id="historyVisits">0</strong></div>
+        <div><span>Sessions</span><strong id="historySessions">0</strong></div>
+        <div><span>Drift blocks</span><strong id="historyDriftBlocks">0</strong></div>
+      </div>
+      <div id="historySites" class="history-sites"></div>
+    </section>
+
+    <p id="dashboardStatus" class="status-text" role="status"></p>
+  </main>
+
+  <script type="module" src="dashboard.js"></script>
+</body>
+</html>

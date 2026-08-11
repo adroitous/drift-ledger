@@ -1,4 +1,5 @@
-import { CATEGORY_DEFINITIONS, categoryLabel, classifyDomain, normalizeDomain } from "./classifier.js";
+import { CATEGORY_DEFINITIONS, classifyDomain, normalizeDomain } from "./classifier.js";
+import { buildAnalyticsReport } from "./analytics.js";
 import { callExtensionApi } from "./chromeCompat.js";
 import { scoreDrift } from "./driftScorer.js";
 import { sanitizeBraveHistoryImport } from "./historyImport.js";
@@ -6,16 +7,20 @@ import {
   DEFAULT_SETTINGS,
   LEGACY_STORAGE_KEYS,
   STORAGE_KEYS,
+  completeExpiredFocus,
   createEmptyState,
   creditActivity,
   hydrateState,
   pruneState,
   recordNavigation,
   sanitizeSettings,
+  startFocusSession,
+  stopFocusSession,
   todaySummary
 } from "./sessionStore.js";
 
 const TICK_ALARM = "drift-ledger-tick";
+const FOCUS_ALARM = "drift-ledger-focus-end";
 const MAX_CREDIT_SECONDS = 75;
 const RISK_RANK = { low: 0, medium: 1, high: 2 };
 
@@ -76,6 +81,11 @@ async function save() {
 async function configureRuntime() {
   chrome.idle.setDetectionInterval(settings.idleDetectionSeconds);
   chrome.alarms.create(TICK_ALARM, { periodInMinutes: 1 });
+  if (state.focusSession?.endsAt > Date.now()) {
+    chrome.alarms.create(FOCUS_ALARM, { when: state.focusSession.endsAt });
+  } else {
+    await callExtensionApi(chrome.alarms, "clear", FOCUS_ALARM);
+  }
 }
 
 function settleCurrentActivity(now = Date.now()) {
@@ -183,6 +193,12 @@ function badgeText(seconds) {
 }
 
 async function updateBadge(scoring) {
+  if (state.focusSession?.endsAt > Date.now()) {
+    const remainingMinutes = Math.max(1, Math.ceil((state.focusSession.endsAt - Date.now()) / 60000));
+    await callExtensionApi(chrome.action, "setBadgeBackgroundColor", { color: "#32705d" });
+    await callExtensionApi(chrome.action, "setBadgeText", { text: `F${remainingMinutes}` });
+    return;
+  }
   if (!settings.trackingEnabled || scoring.risk === "low") {
     await callExtensionApi(chrome.action, "setBadgeText", { text: "" });
     return;
@@ -202,7 +218,7 @@ async function evaluateAndNudge(now = Date.now()) {
   const scoring = scoreDrift(block, settings, now);
   await updateBadge(scoring);
 
-  if (!block || scoring.risk === "low") {
+  if (!block || scoring.risk === "low" || !settings.notificationsEnabled) {
     return scoring;
   }
   if (RISK_RANK[scoring.risk] <= RISK_RANK[block.lastNotifiedRisk || "low"]) {
@@ -218,7 +234,7 @@ async function evaluateAndNudge(now = Date.now()) {
     await callExtensionApi(
       chrome.notifications,
       "create",
-      `attention-${block.id}-${scoring.risk}`,
+      `drift-${block.id}-${scoring.risk}`,
       {
       type: "basic",
       iconUrl: chrome.runtime.getURL("icons/icon128.png"),
@@ -239,9 +255,32 @@ async function evaluateAndNudge(now = Date.now()) {
   return scoring;
 }
 
+async function completeFocusIfNeeded(now = Date.now()) {
+  const completed = completeExpiredFocus(state, now);
+  if (!completed) {
+    return null;
+  }
+  await callExtensionApi(chrome.alarms, "clear", FOCUS_ALARM);
+  if (settings.notificationsEnabled) {
+    try {
+      await callExtensionApi(chrome.notifications, "create", `focus-${completed.id}`, {
+        type: "basic",
+        iconUrl: chrome.runtime.getURL("icons/icon128.png"),
+        title: "Focus session complete",
+        message: `${completed.label}: ${Math.round(completed.durationSeconds / 60)} minutes.`,
+        contextMessage: "Drift Ledger"
+      });
+    } catch (error) {
+      console.warn("Drift Ledger focus notification failed:", error);
+    }
+  }
+  return completed;
+}
+
 async function syncActiveContext() {
   await load();
   const now = Date.now();
+  await completeFocusIfNeeded(now);
   settleCurrentActivity(now);
   const { context, reason } = await queryCurrentContext();
   if (context) {
@@ -289,6 +328,9 @@ function snapshot(now = Date.now()) {
     ? Number(day.domains?.[state.activity.domain]?.activeSeconds || 0)
     : 0;
   const history = state.historyBaseline;
+  const driftSecondsToday = Object.entries(day.categories || {})
+    .filter(([category]) => CATEGORY_DEFINITIONS[category]?.role === "drift")
+    .reduce((sum, [, seconds]) => sum + Number(seconds || 0), 0);
   return {
     now,
     trackingEnabled: settings.trackingEnabled,
@@ -298,6 +340,9 @@ function snapshot(now = Date.now()) {
     categories: CATEGORY_DEFINITIONS,
     today: {
       totalActiveSeconds: Math.round(day.totalActiveSeconds || 0),
+      driftSeconds: Math.round(driftSecondsToday),
+      driftBudgetSeconds: settings.dailyDriftBudgetMinutes * 60,
+      focusSeconds: Math.round(day.focusSeconds || 0),
       activeDomainSeconds: Math.round(activeDomainTodaySeconds),
       topDomains: topEntries(
         Object.fromEntries(Object.entries(day.domains || {}).map(([domain, data]) => [domain, data.activeSeconds])),
@@ -305,6 +350,10 @@ function snapshot(now = Date.now()) {
       ),
       categories: topEntries(day.categories || {}, 10)
     },
+    focus: state.focusSession ? {
+      ...state.focusSession,
+      remainingSeconds: Math.max(0, Math.ceil((state.focusSession.endsAt - now) / 1000))
+    } : null,
     history: history ? {
       id: history.id,
       importedAt: history.importedAt,
@@ -348,14 +397,38 @@ function summarizedBlock(block) {
 
 function exportPayload(now = Date.now()) {
   return {
+    schema: "drift-ledger-export-v1",
+    version: 1,
     exportedAt: new Date(now).toISOString(),
     privacy: "Domain aggregates only. No page content, raw URLs, or search queries.",
     settings,
     daily: state.daily,
     currentBlock: summarizedBlock(state.currentBlock),
     archivedBlocks: state.archivedBlocks.map(summarizedBlock),
+    focusSession: state.focusSession,
+    focusHistory: state.focusHistory,
     historyBaseline: state.historyBaseline
   };
+}
+
+async function startFocus(minutes, label) {
+  const now = Date.now();
+  if (state.focusSession) {
+    stopFocusSession(state, now);
+  }
+  const focus = startFocusSession(state, minutes || settings.focusDefaultMinutes, label, now);
+  chrome.alarms.create(FOCUS_ALARM, { when: focus.endsAt });
+  await evaluateAndNudge(now);
+  await save();
+  return focus;
+}
+
+async function stopFocus() {
+  const session = stopFocusSession(state, Date.now());
+  await callExtensionApi(chrome.alarms, "clear", FOCUS_ALARM);
+  await evaluateAndNudge();
+  await save();
+  return session;
 }
 
 async function setSnooze(minutes) {
@@ -412,6 +485,20 @@ async function handleMessage(message) {
     case "MARK_INTENTIONAL":
       await markIntentional();
       return { ok: true, snapshot: snapshot() };
+    case "START_FOCUS":
+      await startFocus(message.minutes, message.label);
+      return { ok: true, snapshot: snapshot() };
+    case "STOP_FOCUS":
+      await stopFocus();
+      return { ok: true, snapshot: snapshot() };
+    case "GET_DASHBOARD": {
+      await syncActiveContext();
+      const report = buildAnalyticsReport(state, settings, {
+        days: message.days,
+        now: Date.now()
+      });
+      return { ok: true, snapshot: snapshot(), report };
+    }
     case "CLEAR_DATA":
       state = createEmptyState();
       await callExtensionApi(
@@ -481,7 +568,7 @@ chrome.idle.onStateChanged.addListener(() => {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === TICK_ALARM) {
+  if (alarm.name === TICK_ALARM || alarm.name === FOCUS_ALARM) {
     enqueue(syncActiveContext);
   }
 });

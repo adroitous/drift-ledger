@@ -2,8 +2,9 @@
   "manifest_version": 3,
   "name": "Drift Ledger",
   "short_name": "Drift Ledger",
-  "version": "0.2.0",
-  "description": "A private, local ledger for active browsing time and attention drift in Brave Desktop.",
+  "version": "1.0.0",
+  "description": "Local Brave time analytics, attention-drift patterns, site averages, and focus sessions.",
+  "homepage_url": "https://github.com/adroitous/drift-ledger",
   "minimum_chrome_version": "92",
   "permissions": [
     "alarms",

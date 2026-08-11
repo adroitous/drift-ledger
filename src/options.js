@@ -11,6 +11,10 @@ const fields = {
   highNavigationRate: document.querySelector("#highNavigationRate"),
   idleDetectionSeconds: document.querySelector("#idleDetectionSeconds"),
   sessionGapMinutes: document.querySelector("#sessionGapMinutes"),
+  retentionDays: document.querySelector("#retentionDays"),
+  dailyDriftBudgetMinutes: document.querySelector("#dailyDriftBudgetMinutes"),
+  focusDefaultMinutes: document.querySelector("#focusDefaultMinutes"),
+  notificationsEnabled: document.querySelector("#notificationsEnabled"),
   overrideDomain: document.querySelector("#overrideDomain"),
   overrideCategory: document.querySelector("#overrideCategory"),
   overrideCount: document.querySelector("#overrideCount"),
@@ -92,6 +96,10 @@ function loadSettings(settings) {
   fields.highNavigationRate.value = settings.highNavigationRate;
   fields.idleDetectionSeconds.value = settings.idleDetectionSeconds;
   fields.sessionGapMinutes.value = settings.sessionGapMinutes;
+  fields.retentionDays.value = settings.retentionDays;
+  fields.dailyDriftBudgetMinutes.value = settings.dailyDriftBudgetMinutes;
+  fields.focusDefaultMinutes.value = settings.focusDefaultMinutes;
+  fields.notificationsEnabled.checked = settings.notificationsEnabled;
   domainOverrides = { ...settings.domainOverrides };
   renderOverrides();
 }
@@ -153,6 +161,10 @@ function formSettings() {
     highNavigationRate: Number(fields.highNavigationRate.value),
     idleDetectionSeconds: Number(fields.idleDetectionSeconds.value),
     sessionGapMinutes: Number(fields.sessionGapMinutes.value),
+    retentionDays: Number(fields.retentionDays.value),
+    dailyDriftBudgetMinutes: Number(fields.dailyDriftBudgetMinutes.value),
+    focusDefaultMinutes: Number(fields.focusDefaultMinutes.value),
+    notificationsEnabled: fields.notificationsEnabled.checked,
     domainOverrides
   };
 }
@@ -198,6 +210,10 @@ document.querySelector("#exportButton").addEventListener("click", async () => {
   const response = await request({ type: "EXPORT_DATA" });
   downloadJson(response.data);
 });
+
+document.querySelector("#dashboardButton").addEventListener("click", () => chrome.tabs.create({
+  url: chrome.runtime.getURL("src/dashboard.html")
+}));
 
 document.querySelector("#importHistoryButton").addEventListener("click", async () => {
   const [file] = fields.historyFile.files;

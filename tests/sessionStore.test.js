@@ -4,9 +4,12 @@ import assert from "node:assert/strict";
 import {
   DEFAULT_SETTINGS,
   createEmptyState,
+  completeExpiredFocus,
   creditActivity,
   localDateKey,
-  recordNavigation
+  recordNavigation,
+  startFocusSession,
+  stopFocusSession
 } from "../src/sessionStore.js";
 
 test("records active seconds and navigations as separate aggregate signals", () => {
@@ -22,6 +25,22 @@ test("records active seconds and navigations as separate aggregate signals", () 
   assert.equal(day.domains["reddit.com"].visits, 1);
   assert.equal(day.domains["reddit.com"].sessions, 1);
   assert.equal(state.currentBlock.navigations, 1);
+});
+
+test("records completed and manually stopped focus sessions", () => {
+  const now = new Date(2026, 7, 10, 12, 0, 0).getTime();
+  const state = createEmptyState(now);
+  startFocusSession(state, 25, "Write report", now);
+  const completed = completeExpiredFocus(state, now + 25 * 60 * 1000);
+
+  assert.equal(completed.completed, true);
+  assert.equal(state.daily[localDateKey(now)].focusSeconds, 25 * 60);
+  assert.equal(state.focusHistory.length, 1);
+
+  startFocusSession(state, 25, "Review", now + 30 * 60 * 1000);
+  const stopped = stopFocusSession(state, now + 35 * 60 * 1000);
+  assert.equal(stopped.completed, false);
+  assert.equal(Math.round(stopped.durationSeconds), 5 * 60);
 });
 
 test("deduplicates route and commit events emitted for one navigation", () => {
